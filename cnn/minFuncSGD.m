@@ -45,10 +45,10 @@ for e = 1:epochs
     
     % randomly permute indices of data for quick minibatch sampling
     rp = randperm(m);
-    
+    fprintf('\n Epoch %d total round=%d, step=%d\n', e, (m-minibatch+1), minibatch);
+    fflush(stdout);
     for s=1:minibatch:(m-minibatch+1)
         it = it + 1;
-
         % increase momentum after momIncrease iterations
         if it == momIncrease
             mom = options.momentum;
@@ -59,7 +59,7 @@ for e = 1:epochs
         mb_labels = labels(rp(s:s+minibatch-1));
 
         % evaluate the objective function on the next minibatch
-        [cost grad] = funObj(theta,mb_data,mb_labels);
+        [cost, grad] = funObj(theta,mb_data,mb_labels);
         
         % Instructions: Add in the weighted velocity vector to the
         % gradient evaluated above scaled by the learning rate.
@@ -67,8 +67,10 @@ for e = 1:epochs
         % sgd update rule
         
         %%% YOUR CODE HERE %%%
-        
-        fprintf('Epoch %d: Cost on iteration %d is %f\n',e,it,cost);
+        velocity = mom*velocity+alpha*grad;   
+        theta = theta-velocity;  
+        fprintf('Epoch %d: Cost on iteration %d cost is %f\n',e,it,cost);
+        fflush(stdout);
     end;
 
     % aneal learning rate by factor of two after each epoch

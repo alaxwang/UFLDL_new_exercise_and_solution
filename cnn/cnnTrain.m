@@ -21,11 +21,30 @@ poolDim = 2;      % Pooling dimension, (should divide imageDim-filterDim+1)
 
 % Load MNIST Train
 addpath ../common/;
+printf('Start loading.\n');
+fflush(stdout);
 images = loadMNISTImages('../common/train-images-idx3-ubyte');
 images = reshape(images,imageDim,imageDim,[]);
+%display(images(:,:,1));
 labels = loadMNISTLabels('../common/train-labels-idx1-ubyte');
+%load('kaggle.mat');
+%fprintf('kaggle images = %d.\n', length(y));
+%fflush(stdout);
+%images = X';
+%images = reshape(images,imageDim,imageDim,[]);
+%display(images(:,:,10000));
+%labels = y;
 labels(labels==0) = 10; % Remap 0 to 10
+testImages = loadMNISTImages('../common/t10k-images-idx3-ubyte');
+%testImages = X(30001:31001, :)';
+testImages = reshape(testImages,imageDim,imageDim,[]);
+%testLabels = y(30001:31001, :);
+testLabels = loadMNISTLabels('../common/t10k-labels-idx1-ubyte');
+testLabels(testLabels==0) = 10; % Remap 0 to 10
 
+
+fprintf('Load done total images = %d\n', length(labels));
+fflush(stdout);
 % Initialize Parameters
 theta = cnnInitParams(imageDim,filterDim,numFilters,poolDim,numClasses);
 
@@ -70,7 +89,7 @@ if DEBUG
  
     assert(diff < 1e-9,...
         'Difference too large. Check your gradient computation again');
-    
+   return; 
 end;
 
 %%======================================================================
@@ -84,21 +103,39 @@ options.momentum = .95;
 
 opttheta = minFuncSGD(@(x,y,z) cnnCost(x,y,z,numClasses,filterDim,...
                       numFilters,poolDim),theta,images,labels,options);
+%costFunc = @(p) cnnCost(p, images, labels, numClasses, ...
+%                          filterDim, numFilters, poolDim);
+%opt = optimset('MaxIter', 50);
+%[opttheta, cost] = fmincg(costFunc, theta, opt);
 
 %%======================================================================
 %% STEP 4: Test
 %  Test the performance of the trained model using the MNIST test set. Your
 %  accuracy should be above 97% after 3 epochs of training
 
-testImages = loadMNISTImages('../common/t10k-images-idx3-ubyte');
-testImages = reshape(testImages,imageDim,imageDim,[]);
-testLabels = loadMNISTLabels('../common/t10k-labels-idx1-ubyte');
-testLabels(testLabels==0) = 10; % Remap 0 to 10
 
-[~,cost,preds]=cnnCost(opttheta,testImages,testLabels,numClasses,...
-                filterDim,numFilters,poolDim,true);
+%printf('Start Load test test\n');
+%fflush(stdout);
+%load('kaggle_test.mat');
+%fprintf('Load test done test images = %d\n', size(test_X,1));
+%fflush(stdout);
+%testImages = test_X';
+%testImages = reshape(testImages,imageDim,imageDim,[]);
+
+[~,cost,preds] = cnnCost(opttheta,testImages,testLabels,numClasses,...
+                 filterDim,numFilters,poolDim,true);
+%printf('Predict done\n');
+%fflush(stdout);
+%f = fopen('kaggle_test_result_cnn.txt', "w");
+%fprintf(f, 'ImageId,Label\n');
+%preds(preds==10) = 0;
+%for i=1:size(preds)
+%  fprintf(f, '%d,%d\n', i, preds(i));
+%end;
+%fclose(f);
+%return;
 
 acc = sum(preds==testLabels)/length(preds);
 
 % Accuracy should be around 97.4% after 3 epochs
-fprintf('Accuracy is %f\n',acc);
+fprintf('Accuracy is %f%%\n',acc*100);

@@ -25,18 +25,5 @@ for i=1:numImages
     pooledFeatures(:, :, j, i) = im(1:poolDim:end, 1:poolDim:end) ./ (poolDim^2);
   end;
 end;
-% Instructions:
-%   Now pool the convolved features in regions of poolDim x poolDim,
-%   to obtain the 
-%   (convolvedDim/poolDim) x (convolvedDim/poolDim) x numFeatures x numImages 
-%   matrix pooledFeatures, such that
-%   pooledFeatures(poolRow, poolCol, featureNum, imageNum) is the 
-%   value of the featureNum feature for the imageNum image pooled over the
-%   corresponding (poolRow, poolCol) pooling region. 
-%   
-%   Use mean pooling here.
-
-%%% YOUR CODE HERE %%%
-
 end
 
