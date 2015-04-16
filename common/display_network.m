@@ -90,9 +90,11 @@ else
 end
 
 if opt_graycolor
-    h=imagesc(array,'EraseMode','none',[-1 1]);
+    %h=imagesc(array,'EraseMode','none',[-1 1]);
+    h=imagesc(flipud(array),'EraseMode','none');
 else
-    h=imagesc(array,'EraseMode','none',[-1 1]);
+    %h=imagesc(array,'EraseMode','none',[-1 1]);
+    h=imagesc(flipud(array),'EraseMode','none');
 end
 axis image off
 

@@ -7,13 +7,18 @@
 
 addpath(genpath('../common'))
 x = loadMNISTImages('../common/train-images-idx3-ubyte');
+display(size(x));
 figure('name','Raw images');
 randsel = randi(size(x,2),200,1); % A random selection of samples for visualization
 display_network(x(:,randsel));
-
+printf('Pause...\n');
+pause;
 %%================================================================
 %% Step 0b: Zero-mean the data (by row)
 %  You can make use of the mean and repmat/bsxfun functions.
+% 784 * 60000
+avg = mean(x, 1);
+x = x - repmat(avg, size(x,1), 1);
 
 %%% YOUR CODE HERE %%%
 
@@ -21,6 +26,13 @@ display_network(x(:,randsel));
 %% Step 1a: Implement PCA to obtain xRot
 %  Implement PCA to obtain xRot, the matrix in which the data is expressed
 %  with respect to the eigenbasis of sigma, which is the matrix U.
+[U,S,V] = svd(1/size(x,2) * (x*x'));
+xRot = U' * x;
+
+% intersting to see this.
+%display_network(U(:,1:200));
+%printf('Pause...U pic\n');
+%pause;
 
 %%% YOUR CODE HERE %%%
 
@@ -33,12 +45,16 @@ display_network(x(:,randsel));
 %  When visualised as an image, you should see a straight line across the
 %  diagonal (non-zero entries) against a blue background (zero entries).
 
+covar=1/size(xRot,2)*(xRot*xRot');
+
 %%% YOUR CODE HERE %%%
 
 % Visualise the covariance matrix. You should see a line across the
 % diagonal against a blue background.
 figure('name','Visualisation of covariance matrix');
 imagesc(covar);
+printf('Pause...\n');
+pause;
 
 %%================================================================
 %% Step 2: Find k, the number of components to retain
@@ -46,7 +62,16 @@ imagesc(covar);
 %  to retain at least 99% of the variance.
 
 %%% YOUR CODE HERE %%%
-
+li = diag(S);
+k = 1;
+for i=1:length(li)
+  if (sum(li(1:i)) >= sum(li)*0.69)
+    k = i;
+    break;
+  end;
+end;
+fprintf('k=%d\n',k);
+%
 %%================================================================
 %% Step 3: Implement PCA with dimension reduction
 %  Now that you have found k, you can reduce the dimension of the data by
@@ -63,6 +88,9 @@ imagesc(covar);
 
 %%% YOUR CODE HERE %%%
 
+xTilde=U(:,1:k)'*x;
+xHat = U(:,1:k)*xTilde;
+
 % Visualise the data, and compare it to the raw data
 % You should observe that the raw and processed data are of comparable quality.
 % For comparison, you may wish to generate a PCA reduced image which
@@ -72,7 +100,9 @@ figure('name',['PCA processed images ',sprintf('(%d / %d dimensions)', k, size(x
 display_network(xHat(:,randsel));
 figure('name','Raw images');
 display_network(x(:,randsel));
-
+printf('Pause with PAC\n');
+pause;
+%
 %%================================================================
 %% Step 4a: Implement PCA with whitening and regularisation
 %  Implement PCA with whitening and regularisation to produce the matrix
@@ -92,17 +122,20 @@ epsilon = 1e-1;
 %  Without regularisation (set epsilon to 0 or close to 0), 
 %  when visualised as an image, you should see a red line across the
 %  diagonal (one entries) against a blue background (zero entries).
-%  With regularisation, you should see a red line that slowly turns
+%  With regularisation, you should see a red line that slowly turn
 %  blue across the diagonal, corresponding to the one entries slowly
 %  becoming smaller.
 
 %%% YOUR CODE HERE %%%
 
+xPCAwhite = diag(1./sqrt(diag(S) + epsilon)) * U' * x;
+covar = 1/size(xPCAwhite,2) * xPCAwhite*xPCAwhite';
 % Visualise the covariance matrix. You should see a red line across the
 % diagonal against a blue background.
 figure('name','Visualisation of covariance matrix');
 imagesc(covar);
-
+printf('Covarnce pause');
+pause;
 %%================================================================
 %% Step 5: Implement ZCA whitening
 %  Now implement ZCA whitening to produce the matrix xZCAWhite. 
@@ -110,7 +143,7 @@ imagesc(covar);
 %  that whitening results in, among other things, enhanced edges.
 
 %%% YOUR CODE HERE %%%
-
+xZCAWhite = U*xPCAwhite;
 % Visualise the data, and compare it to the raw data.
 % You should observe that the whitened images have enhanced edges.
 figure('name','ZCA whitened images');
