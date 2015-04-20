@@ -62,6 +62,7 @@ testLabels(removeSet) = [];
 fprintf('# examples in unlabeled set: %d\n', size(unlabeledData, 2));
 fprintf('# examples in supervised training set: %d\n\n', size(trainData, 2));
 fprintf('# examples in supervised testing set: %d\n\n', size(testData, 2));
+fflush(stdout);
 
 %% ======================================================================
 %  STEP 2: Train the RICA
@@ -73,7 +74,11 @@ randTheta = randTheta ./ repmat(sqrt(sum(randTheta.^2,2)), 1, size(randTheta,2))
 randTheta = randTheta(:);
 
 % subsample random patches from the unlabelled+training data
-patches = samplePatches([unlabeledData,trainData],params.patchWidth,200000);
+num_sample = 200000;
+patches = samplePatches([unlabeledData,trainData],params.patchWidth,num_sample);
+
+printf('Done sample\n');
+fflush(stdout);
 
 %configure minFunc
 options.Method = 'lbfgs';
@@ -86,12 +91,19 @@ opttheta = randTheta;
 %  You will need to whitened the patches with the zca2 function 
 %  then call minFunc with the softICACost function as seen in the RICA exercise.
 %%% YOUR CODE HERE %%%
+[patches ,V] = zca2(patches);
+m = sqrt(sum(patches.^2) + (1e-8));
+x = bsxfunwrap(@rdivide,patches,m);
+printf('Before soft ica\n');
+fflush(stdout);
+[opttheta, cost, exitflag] = minFunc( @(theta) softICACost(theta, x, params), randTheta, options);
+printf('After soft ica\n');
+fflush(stdout);
 
 % reshape visualize weights
 W = reshape(opttheta, params.numFeatures, params.n);
 display_network(W');
 
-%% ======================================================================
 
 %% STEP 3: Extract Features from the Supervised Dataset
 % pre-multiply the weights with whitening matrix, equivalent to whitening
@@ -110,8 +122,15 @@ trainImages=reshape(trainData, imgSize, imgSize, size(trainData, 2));
 testImages=reshape(testData, imgSize, imgSize, size(testData, 2));
 %  Compute convolutional responses
 %  TODO: You will need to complete feedfowardRICA.m 
+printf('Before train feedwoad \n');
+fflush(stdout);
 trainAct = feedfowardRICA(filterDim, poolDim, numFilters, trainImages, W);
+printf('After train feedwoad \n');
+fflush(stdout);
 testAct = feedfowardRICA(filterDim, poolDim, numFilters, testImages, W);
+printf('After test feedwoad \n');
+fflush(stdout);
+
 %  reshape the responses into feature vectors
 featureSize = size(trainAct,1)*size(trainAct,2)*size(trainAct,3);
 trainFeatures = reshape(trainAct, featureSize, size(trainData, 2));
@@ -121,10 +140,10 @@ testFeatures = reshape(testAct, featureSize, size(testData, 2));
 
 numClasses  = 5; % doing 5-class digit recognition
 % initialize softmax weights randomly
-randTheta2 = randn(numClasses, featureSize)*0.01;  % 1/sqrt(params.n);
+randTheta2 = randn(numClasses-1, featureSize+1)*0.01;  % 1/sqrt(params.n);
 randTheta2 = randTheta2 ./ repmat(sqrt(sum(randTheta2.^2,2)), 1, size(randTheta2,2)); 
 randTheta2 = randTheta2';
-randTheta2 = randTheta2(:);
+%randTheta2 = randTheta2(:);
 
 %  Use minFunc and softmax_regression_vec from the previous exercise to 
 %  train a multi-class classifier. 
@@ -135,6 +154,19 @@ options.MaxIter = 300;
 % optimize
 %%% YOUR CODE HERE %%%
 
+train.X = [ones(1, size(trainFeatures,2));trainFeatures];
+train.y = trainLabels;
+theta = randTheta2;
+printf('Before softmax\n');
+fflush(stdout);
+theta(:)=minFunc(@softmax_regression_vec, randTheta2(:), options, train.X, train.y);
+printf('After softmax\n');
+fflush(stdout);
+theta=[theta, zeros(featureSize + 1,1)];
+
+test.X = [ones(1, size(testFeatures,2));testFeatures];
+test.y = testLabels;
+
 
 %%======================================================================
 %% STEP 5: Testing 
@@ -142,8 +174,9 @@ options.MaxIter = 300;
 % and softmaxModel
 %%% YOUR CODE HERE %%%
 % Classification Score
-fprintf('Train Accuracy: %f%%\n', 100*mean(train_pred(:) == trainLabels(:)));
-fprintf('Test Accuracy: %f%%\n', 100*mean(pred(:) == testLabels(:)));
+fprintf('Train Accuracy: %f%%\n', 100*multi_classifier_accuracy(theta,train.X,train.y));
+fprintf('Test Accuracy: %f%%\n', 100*multi_classifier_accuracy(theta,test.X,test.y));
+
 % You should get 100% train accuracy and ~99% test accuracy. With random
 % convolutional weights we get 97.5% test accuracy. Actual results may
 % vary as a result of random initializations

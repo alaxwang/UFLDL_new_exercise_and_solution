@@ -35,8 +35,9 @@ poolMat = ones(poolDim);
 
 
 for imageNum = 1:numImages
-  if mod(imageNum,500)==0
+  if mod(imageNum,500)==1
     fprintf('forward-prop image %d\n', imageNum);
+    fflush(stdout);
   end
   for filterNum = 1:numFilters
 
@@ -45,19 +46,26 @@ for imageNum = 1:numImages
     % convolution
     %%% YOUR CODE HERE %%%
 
+    filter = W(:,:, filterNum);
     % Flip the feature matrix because of the definition of convolution, as explained later
     filter = rot90(squeeze(filter),2);
       
     % Obtain the image
     im = squeeze(images(:, :, imageNum));
 
-    resp = zeros(convDim, convDim); % You should replace this
+    resp = zeros(convDim, convDim);
+    resp = resp + conv2(im, filter, 'valid');
+    % You should replace this
     % Convolve "filter" with "im" to find "resp"
     % be sure to do a 'valid' convolution
     %%% YOUR CODE HERE %%%
     % Then, apply square-square-root pooling on "resp" to get the hidden
     % activation "act"
+
     act = zeros(convDim / poolDim, convDim / poolDim); % You should replace this
+    resp = conv2(resp, poolMat ./ (poolDim^2), 'valid');
+    resp=resp(1:poolDim:end,1:poolDim:end);
+    act = act + resp;
     %%% YOUR CODE HERE %%%
     features(:, :, filterNum, imageNum) = act;
   end

@@ -100,4 +100,4 @@ axis image off
 
 drawnow;
 
-warning on all
+%warning on all

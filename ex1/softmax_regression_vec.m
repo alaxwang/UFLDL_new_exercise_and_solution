@@ -12,7 +12,7 @@ function [f,g] = softmax_regression_vec(theta, X,y)
   %
   m=size(X,2);
   n=size(X,1);
-
+  % fprintf('m = %d, n = %d theta_size= %d\n', m,n, length(theta));
   % theta is a vector;  need to reshape to n x num_classes.
   theta=reshape(theta, n, []);
   num_classes=size(theta,2)+1;

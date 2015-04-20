@@ -26,8 +26,9 @@ patches = samplePatches(data,params.patchWidth,params.m);
 display_network(patches(:,1:100));
 printf('Orignal patches pause.\n');
 %pause;
-% Step 2) Apply ZCA
-patches = zca2(patches);
+% Stpatchesep 2) Apply ZCA
+org_patches = patches;
+[patches, V] = zca2(patches);
 display_network(patches(:,1:100));
 printf('whined patches pause.\n');
 %pause;
@@ -77,4 +78,9 @@ display(size(patches));
 display_network(W');
 printf('final pause.\n');
 pause;
-display_network((W*patches)(1:100));
+%rica_p = W*V; %reshape(W*V, params.numFeatures, params.patchWidth, params.patchWidth);
+%rica_p = permute(rica_p, [2,3,1]);
+%display(size(rica_p));
+%printf('rica pause.\n');
+%pause;
+%display_network(rica_p*org_patches(:, 1:100));
